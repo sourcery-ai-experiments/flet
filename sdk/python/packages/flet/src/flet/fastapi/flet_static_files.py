@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import stat
 import tempfile
 from pathlib import Path
 from typing import Optional, Tuple
@@ -79,6 +80,8 @@ class FletStaticFiles(StaticFiles):
         logger.info(f"Use color emoji: {self.__use_color_emoji}")
         logger.info(f"Route URL strategy configured: {self.__route_url_strategy}")
 
+        self.html = self.__route_url_strategy == "path"
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.__once.do(self.__config, scope["root_path"])
         await super().__call__(scope, receive, send)
@@ -96,7 +99,11 @@ class FletStaticFiles(StaticFiles):
         full_path, stat_result = super().lookup_path(path)
 
         # if a file cannot be found
-        if stat_result is None:
+        if (stat_result is None and self.html) or (
+            stat_result
+            and stat.S_ISDIR(stat_result.st_mode)
+            and full_path.endswith(self.temp_dir)
+        ):
             return super().lookup_path(self.index)
 
         return full_path, stat_result
@@ -108,9 +115,9 @@ class FletStaticFiles(StaticFiles):
             self.__app_mount_path = root_path
 
         # where modified index.html is stored
-        temp_dir = tempfile.mkdtemp()
-        app_manager.add_temp_dir(temp_dir)
-        logger.info(f"Temp dir created for patched index and manifest: {temp_dir}")
+        self.temp_dir = tempfile.mkdtemp()
+        app_manager.add_temp_dir(self.temp_dir)
+        logger.info(f"Temp dir created for patched index and manifest: {self.temp_dir}")
 
         # "standard" web files
         web_dir = get_package_web_dir()
@@ -136,12 +143,12 @@ class FletStaticFiles(StaticFiles):
         ):
             shutil.copyfile(
                 os.path.join(self.__assets_dir, self.index),
-                os.path.join(temp_dir, self.index),
+                os.path.join(self.temp_dir, self.index),
             )
         else:
             shutil.copyfile(
                 os.path.join(web_dir, self.index),
-                os.path.join(temp_dir, self.index),
+                os.path.join(self.temp_dir, self.index),
             )
 
         # copy manifest.json from assets_dir or web_dir
@@ -150,12 +157,12 @@ class FletStaticFiles(StaticFiles):
         ):
             shutil.copyfile(
                 os.path.join(self.__assets_dir, self.manifest_json),
-                os.path.join(temp_dir, self.manifest_json),
+                os.path.join(self.temp_dir, self.manifest_json),
             )
         else:
             shutil.copyfile(
                 os.path.join(web_dir, self.manifest_json),
-                os.path.join(temp_dir, self.manifest_json),
+                os.path.join(self.temp_dir, self.manifest_json),
             )
 
         ws_path = self.__websocket_endpoint_path
@@ -165,7 +172,7 @@ class FletStaticFiles(StaticFiles):
 
         # replace variables in index.html and manifest.json
         patch_index_html(
-            index_path=os.path.join(temp_dir, self.index),
+            index_path=os.path.join(self.temp_dir, self.index),
             base_href=self.__app_mount_path,
             websocket_endpoint_path=ws_path,
             app_name=self.__app_name,
@@ -176,7 +183,7 @@ class FletStaticFiles(StaticFiles):
         )
 
         patch_manifest_json(
-            manifest_path=os.path.join(temp_dir, self.manifest_json),
+            manifest_path=os.path.join(self.temp_dir, self.manifest_json),
             app_name=self.__app_name,
             app_short_name=self.__app_short_name,
             app_description=self.__app_description,
@@ -184,7 +191,9 @@ class FletStaticFiles(StaticFiles):
 
         # set html=True to resolve the index even when no
         # the base path is passed in
-        super().__init__(directory=temp_dir, packages=None, html=True, check_dir=True)
+        super().__init__(
+            directory=self.temp_dir, packages=None, html=self.html, check_dir=True
+        )
 
         # add the rest of dirs
         if self.__assets_dir:

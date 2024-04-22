@@ -95,7 +95,7 @@ class _DropdownControlState extends State<DropdownControl> with FletStoreMixin {
 
       var items = itemsView.controlViews
           .map((v) => v.control)
-          .where((c) => c.name == null && c.isVisible)
+          .where((c) => c.name == "option" && c.isVisible)
           .map<DropdownMenuItem<String>>((Control itemCtrl) {
         Widget itemChild = Text(
           itemCtrl.attrs["text"] ?? itemCtrl.attrs["key"] ?? itemCtrl.id,

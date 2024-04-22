@@ -305,7 +305,11 @@ class Dropdown(FormFieldControl):
 
     def _get_children(self):
         children = FormFieldControl._get_children(self)
-        children.extend(self.__options)
+        if self.__options:
+            for o in self.__options:
+                if isinstance(o, Option):
+                    o._set_attr_internal("n", "option")
+                    children.append(o)
         if isinstance(self.__hint_content, Control):
             self.__hint_content._set_attr_internal("n", "hint")
             children.extend(self.__hint_content)

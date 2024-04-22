@@ -83,6 +83,7 @@ import 'outlined_button.dart';
 import 'page.dart';
 import 'pagelet.dart';
 import 'piechart.dart';
+import 'platform_menu_bar.dart';
 import 'popup_menu_button.dart';
 import 'progress_bar.dart';
 import 'progress_ring.dart';
@@ -415,6 +416,14 @@ Widget createWidget(
           children: controlView.children,
           parentDisabled: parentDisabled,
           parentAdaptive: parentAdaptive,
+          backend: backend);
+    case "platformmenubar":
+      return PlatformMenuBarControl(
+          key: key,
+          parent: parent,
+          control: controlView.control,
+          children: controlView.children,
+          parentDisabled: parentDisabled,
           backend: backend);
     case "menubar":
       return MenuBarControl(

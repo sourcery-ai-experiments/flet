@@ -1,7 +1,6 @@
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
-
 import 'package:flutter/foundation.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'package:web' as html;
 
 const String _sessionIdKey = "_flet_session_id";
 

@@ -17,6 +17,7 @@ import '../utils/transforms.dart';
 import 'alert_dialog.dart';
 import 'animated_switcher.dart';
 import 'auto_complete.dart';
+import 'autofill_group.dart';
 import 'badge.dart';
 import 'banner.dart';
 import 'barchart.dart';
@@ -212,7 +213,7 @@ Widget createWidget(
     bool? parentAdaptive,
     Widget? nextChild,
     FletControlBackend backend) {
-  switch (controlView.control.type) {
+  switch (controlView.control.type.toLowerCase()) {
     case "page":
       return PageControl(
           control: controlView.control,
@@ -803,6 +804,14 @@ Widget createWidget(
           parentDisabled: parentDisabled,
           parentAdaptive: parentAdaptive,
           backend: backend);
+    case "autofillgroup":
+      return AutofillGroupControl(
+          key: key,
+          parent: parent,
+          control: controlView.control,
+          children: controlView.children,
+          parentDisabled: parentDisabled,
+          parentAdaptive: parentAdaptive);
     case "cupertinoradio":
       return CupertinoRadioControl(
           key: key,
@@ -985,7 +994,10 @@ Widget createWidget(
 Widget baseControl(
     BuildContext context, Widget widget, Control? parent, Control control) {
   return _expandable(
-      _tooltip(_opacity(context, widget, parent, control), parent, control),
+      _directionality(
+          _tooltip(_opacity(context, widget, parent, control), parent, control),
+          parent,
+          control),
       parent,
       control);
 }

@@ -2,9 +2,10 @@ import dataclasses
 import time
 from dataclasses import field
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, List
 
 from flet_core.adaptive_control import AdaptiveControl
+from flet_core.autofill_group import AutofillHint
 from flet_core.control import Control, OptionalNumber
 from flet_core.form_field_control import FormFieldControl, InputBorder
 from flet_core.ref import Ref
@@ -121,6 +122,7 @@ class TextField(FormFieldControl, AdaptiveControl):
         cursor_radius: OptionalNumber = None,
         selection_color: Optional[str] = None,
         input_filter: Optional[InputFilter] = None,
+        autofill_hints: Union[None, AutofillHint, List[AutofillHint]] = None,
         on_change=None,
         on_submit=None,
         on_focus=None,
@@ -289,6 +291,7 @@ class TextField(FormFieldControl, AdaptiveControl):
         self.cursor_radius = cursor_radius
         self.selection_color = selection_color
         self.input_filter = input_filter
+        self.autofill_hints = autofill_hints
         self.on_change = on_change
         self.on_submit = on_submit
         self.on_focus = on_focus
@@ -299,7 +302,13 @@ class TextField(FormFieldControl, AdaptiveControl):
 
     def before_update(self):
         super().before_update()
+        assert (
+            self.max_lines is None
+            or self.min_lines is None
+            or self.min_lines <= self.max_lines
+        ), "min_lines can't be greater than max_lines"
         self._set_attr_json("inputFilter", self.__input_filter)
+        self._set_attr_json("autofillHints", self.__autofill_hints)
         if (
             (
                 self.bgcolor is not None
@@ -349,9 +358,7 @@ class TextField(FormFieldControl, AdaptiveControl):
     @text_align.setter
     def text_align(self, value: Optional[TextAlign]):
         self.__text_align = value
-        self._set_attr(
-            "textAlign", value.value if isinstance(value, TextAlign) else value
-        )
+        self._set_enum_attr("textAlign", value, TextAlign)
 
     # multiline
     @property
@@ -369,6 +376,7 @@ class TextField(FormFieldControl, AdaptiveControl):
 
     @min_lines.setter
     def min_lines(self, value: Optional[int]):
+        assert value is None or value > 0, "min_lines must be greater than 0"
         self._set_attr("minLines", value)
 
     # max_lines
@@ -378,6 +386,7 @@ class TextField(FormFieldControl, AdaptiveControl):
 
     @max_lines.setter
     def max_lines(self, value: Optional[int]):
+        assert value is None or value > 0, "max_lines must be greater than 0"
         self._set_attr("maxLines", value)
 
     # max_length
@@ -387,6 +396,9 @@ class TextField(FormFieldControl, AdaptiveControl):
 
     @max_length.setter
     def max_length(self, value: Optional[int]):
+        assert (
+            value is None or value == -1 or value > 0
+        ), "max_length must be either equal to -1 or greater than 0"
         self._set_attr("maxLength", value)
 
     # read_only
@@ -436,11 +448,11 @@ class TextField(FormFieldControl, AdaptiveControl):
 
     # capitalization
     @property
-    def capitalization(self) -> TextCapitalization:
+    def capitalization(self) -> Optional[TextCapitalization]:
         return self.__capitalization
 
     @capitalization.setter
-    def capitalization(self, value: TextCapitalization):
+    def capitalization(self, value: Optional[TextCapitalization]):
         self.__capitalization = value
         self._set_enum_attr("capitalization", value, TextCapitalization)
 
@@ -527,11 +539,11 @@ class TextField(FormFieldControl, AdaptiveControl):
 
     # selection_color
     @property
-    def selection_color(self):
+    def selection_color(self) -> Optional[str]:
         return self._get_attr("selectionColor")
 
     @selection_color.setter
-    def selection_color(self, value):
+    def selection_color(self, value: Optional[str]):
         self._set_attr("selectionColor", value)
 
     # input_filter
@@ -543,6 +555,25 @@ class TextField(FormFieldControl, AdaptiveControl):
     def input_filter(self, value: Optional[InputFilter]):
         self.__input_filter = value
 
+    # autofill_hints
+    @property
+    def autofill_hints(self) -> Union[None, AutofillHint, List[AutofillHint]]:
+        return self.__autofill_hints
+
+    @autofill_hints.setter
+    def autofill_hints(self, value: Union[None, AutofillHint, List[AutofillHint]]):
+        if value is not None:
+            if isinstance(value, List):
+                value = list(
+                    map(
+                        lambda x: x.value if isinstance(x, AutofillHint) else str(x),
+                        value,
+                    )
+                )
+            elif isinstance(value, AutofillHint):
+                value = value.value
+        self.__autofill_hints = value
+
     # on_change
     @property
     def on_change(self):
@@ -551,10 +582,7 @@ class TextField(FormFieldControl, AdaptiveControl):
     @on_change.setter
     def on_change(self, handler):
         self._add_event_handler("change", handler)
-        if handler is not None:
-            self._set_attr("onchange", True)
-        else:
-            self._set_attr("onchange", None)
+        self._set_attr("onChange", True if handler is not None else None)
 
     # on_submit
     @property

@@ -40,7 +40,7 @@ ButtonStyle? parseButtonStyle(ThemeData theme, Control control, String propName,
       defaultShape);
 }
 
-ButtonStyle? buttonStyleFromJSON(ThemeData theme, Map<String, dynamic> json,
+ButtonStyle? buttonStyleFromJSON(ThemeData theme, Map<String, dynamic>? json,
     [Color? defaultForegroundColor,
     Color? defaultBackgroundColor,
     Color? defaultOverlayColor,
@@ -50,31 +50,31 @@ ButtonStyle? buttonStyleFromJSON(ThemeData theme, Map<String, dynamic> json,
     EdgeInsets? defaultPadding,
     BorderSide? defaultBorderSide,
     OutlinedBorder? defaultShape]) {
+  if (json == null) {
+    return null;
+  }
   return ButtonStyle(
       foregroundColor: getMaterialStateProperty<Color?>(
           json["color"],
-          (jv) => HexColor.fromString(theme, jv as String),
-          defaultForegroundColor),
+          (jv) => parseColor(theme, jv as String), defaultForegroundColor),
       backgroundColor: getMaterialStateProperty<Color?>(
           json["bgcolor"],
-          (jv) => HexColor.fromString(theme, jv as String),
-          defaultBackgroundColor),
+          (jv) => parseColor(theme, jv as String), defaultBackgroundColor),
       overlayColor: getMaterialStateProperty<Color?>(
           json["overlay_color"],
-          (jv) => HexColor.fromString(theme, jv as String),
-          defaultOverlayColor),
+          (jv) => parseColor(theme, jv as String), defaultOverlayColor),
       shadowColor: getMaterialStateProperty<Color?>(json["shadow_color"],
-          (jv) => HexColor.fromString(theme, jv as String), defaultShadowColor),
+          (jv) => parseColor(theme, jv as String), defaultShadowColor),
       surfaceTintColor: getMaterialStateProperty<Color?>(
           json["surface_tint_color"],
-          (jv) => HexColor.fromString(theme, jv as String),
+          (jv) => parseColor(theme, jv as String),
           defaultSurfaceTintColor),
       elevation: getMaterialStateProperty(
-          json["elevation"], (jv) => parseDouble(jv), defaultElevation),
+          json["elevation"], (jv) => parseDouble(jv, 0)!, defaultElevation),
       animationDuration: json["animation_duration"] != null
-          ? Duration(milliseconds: parseInt(json["animation_duration"]))
+          ? Duration(milliseconds: parseInt(json["animation_duration"], 0)!)
           : null,
-      padding: getMaterialStateProperty(
+      padding: getMaterialStateProperty<EdgeInsetsGeometry?>(
           json["padding"], (jv) => edgeInsetsFromJson(jv), defaultPadding),
       side: getMaterialStateProperty<BorderSide?>(
           json["side"],
@@ -146,5 +146,5 @@ class CustomFloatingActionButtonLocation extends FloatingActionButtonLocation {
   int get hashCode => dx.hashCode + dy.hashCode;
 
   @override
-  String toString() => 'CustomFloatingActionButtonLocation';
+  String toString() => 'CustomFloatingActionButtonLocation(dx: $dx, dy: $dy)';
 }

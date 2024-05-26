@@ -1,18 +1,17 @@
 @JS()
 library script.js;
 
-import 'dart:js_util';
+import 'dart:js_interop';
 
 import 'package:flutter/foundation.dart';
-import 'package:js/js.dart';
 
 import 'flet_server_protocol.dart';
 
 @JS()
-external dynamic jsConnect(FletServerProtocolOnMessageCallback onMessage);
+external JSPromise jsConnect(JSExportedDartFunction onMessage);
 
 @JS()
-external dynamic jsSend(String data);
+external void jsSend(String data);
 
 class FletJavaScriptServerProtocol implements FletServerProtocol {
   final String address;
@@ -27,7 +26,7 @@ class FletJavaScriptServerProtocol implements FletServerProtocol {
   @override
   connect() async {
     debugPrint("Connecting to JavaScript server $address...");
-    await promiseToFuture(jsConnect(allowInterop(onMessage)));
+    await jsConnect(onMessage.toJS).toDart;
   }
 
   @override

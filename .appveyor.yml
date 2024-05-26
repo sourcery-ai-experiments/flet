@@ -28,10 +28,10 @@ environment:
     #   job_depends_on: build_flet_package
     #   APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
 
-    # - job_name: Build Flet for Linux
-    #   job_group: build_flet
-    #   job_depends_on: build_flet_package
-    #   APPVEYOR_BUILD_WORKER_IMAGE: ubuntu2004
+    - job_name: Build Flet for Linux
+      job_group: build_flet
+      job_depends_on: build_flet_package
+      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu2004
 
     # - job_name: Build Flet for Linux ARM64
     #   job_group: build_flet

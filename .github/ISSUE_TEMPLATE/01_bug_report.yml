@@ -70,11 +70,11 @@ body:
       description: "For example: Debian 11.2"
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: "flet-version"
     attributes:
       label: "Flet version"
-      description: "run `pip show flet` in your terminal to view your Flet version"
+      placeholder: "run `pip show flet` in your terminal to view your Flet version"
     validations:
       required: true
   - type: dropdown
